@@ -1,0 +1,91 @@
+{
+  "name": "Speed Camera - 차량 단속 카메라",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "1분마다 실행",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 80km/h 제한 도로 단속 카메라\n// 속도 범위: 60~100 km/h (80 ± 20)\nconst SPEED_LIMIT = 80;\nconst SPEED_MIN   = 60;\nconst SPEED_MAX   = 100;\nconst LOCATION    = '국도 17호선 단속구간 15.2km 지점';\n\nconst VEHICLE_TYPES = [\n  '승용차', 'SUV', '트럭', '버스', '오토바이', '밴', '택시'\n];\n\nconst results = [];\n\nfor (let vehicleNo = 1; vehicleNo <= 2; vehicleNo++) {\n  const speed       = Math.floor(Math.random() * (SPEED_MAX - SPEED_MIN + 1)) + SPEED_MIN;\n  const vehicleType = VEHICLE_TYPES[Math.floor(Math.random() * VEHICLE_TYPES.length)];\n  const status      = speed > SPEED_LIMIT ? '과속' : '정상';\n\n  console.log(`[차량 ${vehicleNo}] ${vehicleType} | 속도: ${speed} km/h | ${status}`);\n\n  results.push({\n    json: {\n      vehicle_no:   vehicleNo,\n      vehicle_type: vehicleType,\n      speed_kmh:    speed,\n      speed_limit:  SPEED_LIMIT,\n      status:       status,\n      location:     LOCATION\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "차량 데이터 생성 (2대)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": {
+          "__rl": true,
+          "value": "speed_camera",
+          "mode": "name"
+        },
+        "table": {
+          "__rl": true,
+          "value": "camera_logs",
+          "mode": "name"
+        },
+        "dataMode": "autoMapInputData",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "MySQL 저장",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [640, 300],
+      "credentials": {
+        "mySql": {
+          "id": "MYSQL_CREDENTIAL_ID",
+          "name": "Speed Camera MySQL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "1분마다 실행": {
+      "main": [
+        [
+          {
+            "node": "차량 데이터 생성 (2대)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "차량 데이터 생성 (2대)": {
+      "main": [
+        [
+          {
+            "node": "MySQL 저장",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "local"
+  }
+}

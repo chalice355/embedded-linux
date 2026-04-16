@@ -1,0 +1,267 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MYSQL",
+      "label": "MySQL - Speed Camera",
+      "type": "datasource",
+      "pluginId": "mysql",
+      "pluginName": "MySQL"
+    }
+  ],
+  "title": "차량 단속 카메라 대시보드",
+  "uid": "speed-camera-dash",
+  "refresh": "5s",
+  "time": { "from": "now-5m", "to": "now" },
+  "timepicker": {},
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "총 단속 차량",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
+      "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [] }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+          "rawSql": "SELECT COUNT(*) AS value FROM camera_logs WHERE $__timeFilter(captured_at)",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "과속 차량 수",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [] }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+          "rawSql": "SELECT COUNT(*) AS value FROM camera_logs WHERE status = '과속' AND $__timeFilter(captured_at)",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "과속 비율",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
+      "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 30 },
+              { "color": "red", "value": 60 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+          "rawSql": "SELECT ROUND(SUM(CASE WHEN status = '과속' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS value FROM camera_logs WHERE $__timeFilter(captured_at)",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "측정 속도 추이 (km/h)",
+      "gridPos": { "x": 0, "y": 4, "w": 16, "h": 9 },
+      "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "velocitykmh",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 81 }
+            ]
+          },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "제한속도" },
+            "properties": [
+              { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } },
+              { "id": "custom.lineWidth", "value": 2 }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+          "rawSql": "SELECT captured_at AS time, CONCAT(vehicle_type, ' (차량', vehicle_no, ')') AS metric, speed_kmh AS value FROM camera_logs WHERE $__timeFilter(captured_at) ORDER BY captured_at",
+          "format": "time_series",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+          "rawSql": "SELECT captured_at AS time, '제한속도' AS metric, 80 AS value FROM camera_logs WHERE $__timeFilter(captured_at) ORDER BY captured_at LIMIT 1000",
+          "format": "time_series",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "piechart",
+      "title": "정상 / 과속 비율",
+      "gridPos": { "x": 16, "y": 4, "w": 8, "h": 9 },
+      "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+      "options": {
+        "pieType": "donut",
+        "legend": { "displayMode": "table", "placement": "bottom", "values": ["value", "percent"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "정상" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "과속" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+          "rawSql": "SELECT status AS metric, COUNT(*) AS value FROM camera_logs WHERE $__timeFilter(captured_at) GROUP BY status",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "최근 단속 기록",
+      "gridPos": { "x": 0, "y": 13, "w": 24, "h": 8 },
+      "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+      "options": {
+        "sortBy": [{ "displayName": "시간", "desc": true }],
+        "footer": { "show": false }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "상태" },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null }
+                  ]
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "정상": { "color": "green", "index": 0 }, "과속": { "color": "red", "index": 1 } } }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "속도(km/h)" },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-text"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "red", "value": 81 }
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": { "mode": "thresholds" }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "mysql", "uid": "${DS_MYSQL}" },
+          "rawSql": "SELECT captured_at AS '시간', vehicle_no AS '차량번호', vehicle_type AS '차종', speed_kmh AS '속도(km/h)', speed_limit AS '제한속도(km/h)', status AS '상태', location AS '단속위치' FROM camera_logs WHERE $__timeFilter(captured_at) ORDER BY captured_at DESC LIMIT 50",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

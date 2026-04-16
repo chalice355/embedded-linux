@@ -1,0 +1,30 @@
+[ GitHub Repository 정보 ]
+
+Repository URL : https://github.com/chalice355/embedded-linux/tree/main/speed-camera-docker
+Repository Name: speed-camera-docker
+Owner          : chalice355
+Branch         : main
+
+[ 작업 폴더 ]
+
+speed-camera-docker/
+├── docker-compose.yml                     # MySQL + n8n + Grafana 서비스 정의
+├── init.sql                               # camera_logs 테이블 초기화
+├── grafana/
+│   └── dashboard.json                     # Grafana 대시보드 (import용)
+└── workflow/
+    └── speed-camera-workflow.json         # n8n 워크플로우 (import용)
+
+[ 구현 내용 ]
+
+- Docker Compose를 이용한 n8n + MySQL + Grafana 연동
+- 주제: 80km/h 제한 차량 단속 카메라 시뮬레이션
+- 속도 범위: 60 ~ 100 km/h (80 ± 20)
+- 5초마다 차량 2대씩 속도/차종/과속여부 자동 기록
+- Grafana 대시보드: 속도 추이 그래프, 과속 비율, 단속 기록 테이블
+
+[ 서비스 접속 정보 ]
+
+n8n    : http://localhost:5678
+Grafana: http://localhost:3002  (admin / admin123)
+MySQL  : speed-camera-mysql:3306 (camera_user / camera_pass)
