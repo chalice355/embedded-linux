@@ -21,51 +21,24 @@
 
 ```mermaid
 flowchart TD
-    Browser["🌐 브라우저 (Client)"]
+    Browser["🌐 브라우저"]
 
-    subgraph Django ["Django — cocktail_project"]
-        Router["urls.py\n라우터"]
-        subgraph Views ["cocktails/views.py"]
-            V1["index()"]
-            V2["search()"]
-            V3["search_by_ingredient()"]
-            V4["by_category()"]
-            V5["detail()"]
-            V6["random_cocktail()"]
-        end
-        subgraph Templates ["Templates"]
-            T1["index.html"]
-            T2["search.html"]
-            T3["category.html"]
-            T4["detail.html"]
-        end
+    subgraph Django ["Django"]
+        Router["urls.py"]
+        Views["views.py\nindex · search · search_by_ingredient\nby_category · detail · random_cocktail"]
+        Templates["Templates\nindex · search · category · detail"]
     end
 
-    subgraph API ["TheCocktailDB API (외부)"]
-        A1["/search.php?s= — 이름 검색"]
-        A2["/filter.php?i= — 재료 필터"]
-        A3["/filter.php?c= — 카테고리 필터"]
-        A4["/lookup.php?i= — 단건 상세"]
-        A5["/random.php — 랜덤"]
-        A6["/list.php?c=list — 카테고리 목록"]
+    subgraph CocktailDB ["TheCocktailDB API"]
+        API["search.php · filter.php\nlookup.php · random.php · list.php"]
     end
 
     Browser -->|"HTTP GET"| Router
-    Router --> V1 & V2 & V3 & V4 & V5 & V6
-
-    V1 -->|"list.php"| A6
-    V2 -->|"search.php"| A1
-    V3 -->|"filter.php?i"| A2
-    V4 -->|"filter.php?c"| A3
-    V5 -->|"lookup.php"| A4
-    V6 -->|"random.php"| A5
-
-    V1 --> T1
-    V2 & V3 --> T2
-    V4 --> T3
-    V5 & V6 --> T4
-
-    T1 & T2 & T3 & T4 -->|"HTML 응답"| Browser
+    Router --> Views
+    Views -->|"requests (HTTPS)"| API
+    API -->|"JSON 응답"| Views
+    Views --> Templates
+    Templates -->|"HTML 응답"| Browser
 ```
 
 ---
