@@ -1,0 +1,38 @@
+{% extends "cocktails/base.html" %}
+{% block title %}{{ category }} — CocktailDB{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h4 class="mb-4" style="color:#e67e22;">
+    <a href="{% url 'index' %}" style="color:#888; text-decoration:none;">홈</a>
+    <span class="text-secondary mx-2">/</span>
+    <i class="bi bi-grid"></i> {{ category }}
+  </h4>
+
+  {% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+  {% elif cocktails %}
+  <p class="text-secondary mb-3">총 {{ cocktails|length }}개의 칵테일</p>
+  <div class="row g-4">
+    {% for drink in cocktails %}
+    <div class="col-6 col-md-4 col-lg-3">
+      <div class="cocktail-card">
+        <a href="{% url 'detail' drink.idDrink %}">
+          <img src="{{ drink.strDrinkThumb }}/preview" alt="{{ drink.strDrink }}"
+               onerror="this.src='https://www.thecocktaildb.com/images/media/drink/placeholder.jpg'" />
+        </a>
+        <div class="card-body">
+          <div class="card-title" title="{{ drink.strDrink }}">{{ drink.strDrink }}</div>
+          <div class="mt-2">
+            <a href="{% url 'detail' drink.idDrink %}" class="btn-view">레시피 보기</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-secondary">이 카테고리에 칵테일이 없습니다.</p>
+  {% endif %}
+</div>
+{% endblock %}
